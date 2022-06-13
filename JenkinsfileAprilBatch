@@ -3,6 +3,9 @@ node{
     
     properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), [$class: 'JobLocalConfiguration', changeReasonComment: ''], pipelineTriggers([pollSCM('* * * * *')])])
     
+    echo "job name is:" ${env.JOB_NAME}
+    echo "node name is:" ${env.NODE_NAME}
+    echo "Build number is:" ${env.BUILD_NUMBER}
     stage('checkoutcode')
     {
         git branch: 'development', credentialsId: '3ba99cdb-e698-48f6-a01d-b1e1d44df25d', url: 'https://github.com/swamy-mss-org/maven-web-application.git'
