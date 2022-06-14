@@ -7,6 +7,9 @@ node{
     echo "node name is: ${env.NODE_NAME}"
     echo "Build number is: ${env.BUILD_NUMBER}"
   try{
+  //we cant keep like below because when we are staring the job we dont have value for currentBuild.result, will get after executing, also we have to use STARTED since its same below
+    //sendSlackNotifications(currentBuild.result)
+  sendSlackNotifications('STARTED')
   stage('checkoutcode')
     {
         git branch: 'development', credentialsId: '3ba99cdb-e698-48f6-a01d-b1e1d44df25d', url: 'https://github.com/swamy-mss-org/maven-web-application.git'
