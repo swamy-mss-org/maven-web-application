@@ -1,0 +1,106 @@
+pipeline
+{
+agent any
+
+tools{
+maven "maven3.8.4"
+     }
+    
+triggers {
+  pollSCM '* * * * *'
+}
+
+options {
+    //discard old builds
+  buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')
+ 
+ //add timestamps to console utput
+ timestamps()
+    
+}
+
+
+
+stages{
+//checkout code stage
+stage('checkoutcode')
+{
+steps{
+sendSlackNotifications('STARTED')
+  git branch: 'development', credentialsId: '3ba99cdb-e698-48f6-a01d-b1e1d44df25d', url: 'https://github.com/swamy-mss-org/maven-web-application.git'
+     } //step1
+} //stage
+
+// Build stage
+stage('Build')
+{
+steps{
+sh "mvn clean package"
+     } //step2
+} //stage
+
+// Execute SonarQube report
+stage('ExecuteSonarQubeReport')
+{
+steps{
+sh "mvn sonar:sonar"
+} //step3
+}
+
+//Upload artifacts into Artifactory repository
+stage('UploadIntoNexus')
+{
+steps{
+sh "mvn deploy"
+    } //step4
+} //stage4
+
+stage('DeployAppintoTomcatServer')
+{
+steps{
+sshagent(['64034e99-8004-4b14-a40b-f1f128e848c2']) {
+sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.15.100:/opt/apache-tomcat-9.0.63/webapps"
+}
+    } //step5
+}
+
+} //stages
+
+post {
+  success {
+	sendSlackNotifications('SUCCESS')
+    
+  }
+  failure {
+ 	sendSlackNotifications('FAILURE')   
+  }
+}
+
+
+} //pipeline
+
+
+def sendSlackNotifications(String buildStatus = 'STARTED') {
+  buildStatus =  buildStatus ?: 'SUCCESS'
+
+  // Default values
+  def colorName = 'RED'
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
+
+  // Override default values based on build status
+  if (buildStatus == 'STARTED') {
+    color = 'YELLOW'
+    colorCode = '#FFFF00'
+  } else if (buildStatus == 'SUCCESS') {
+    color = 'GREEN'
+    colorCode = '#00FF00'
+  } else {
+    color = 'RED'
+    colorCode = '#FF0000'
+  }
+
+  // Send notifications
+  slackSend (color: colorCode, message: summary, channel: 'wallmart')
+}
