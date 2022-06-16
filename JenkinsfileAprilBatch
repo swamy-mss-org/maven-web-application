@@ -1,3 +1,4 @@
+@Library('sharedlibsmt') _
 //node('nodes'){
 node{
     def mavenHome = tool name: "maven3.8.4"
@@ -51,6 +52,9 @@ sendSlackNotifications(currentBuild.result)
 }
 } // node closing
 
+
+
+/*
 //Below code used for sending slack build notifications
 def sendSlackNotifications(String buildStatus = 'STARTED') {
   buildStatus =  buildStatus ?: 'SUCCESS'
@@ -76,3 +80,4 @@ def sendSlackNotifications(String buildStatus = 'STARTED') {
   // Send notifications
   slackSend (color: colorCode, message: summary, channel: 'wallmart')
 }
+*/
